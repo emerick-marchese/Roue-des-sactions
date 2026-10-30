@@ -1,0 +1,70 @@
+{
+  "name": "la-roue",
+  "productName": "La Roue",
+  "version": "1.0.0",
+  "description": "La Roue : une roue à tirage au sort, avec pourcentages, noms et vrai bruit de roue.",
+  "author": {
+    "name": "La Roue"
+  },
+  "license": "UNLICENSED",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "node scripts/build-win.js",
+    "icone": "node scripts/make-icon.js"
+  },
+  "devDependencies": {
+    "electron": "44.7.1",
+    "electron-builder": "26.17.0"
+  },
+  "build": {
+    "appId": "fr.cogec.laroue",
+    "productName": "La Roue",
+    "copyright": "© 2026 La Roue",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "src/**/*",
+      "package.json"
+    ],
+    "electronLanguages": [
+      "fr",
+      "en-US"
+    ],
+    "compression": "maximum",
+    "publish": null,
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": "always",
+      "createStartMenuShortcut": true,
+      "shortcutName": "La Roue",
+      "runAfterFinish": true,
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "uninstallDisplayName": "La Roue",
+      "language": "1036",
+      "installerLanguages": [
+        "fr_FR"
+      ],
+      "artifactName": "La-Roue-Setup-${version}.${ext}"
+    }
+  }
+}

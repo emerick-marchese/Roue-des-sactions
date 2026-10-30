@@ -1,0 +1,48 @@
+name: La Roue – installateur Windows
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  installateur:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - run: npm ci
+
+      - run: npm run dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: La-Roue-Setup
+          path: dist/*.exe
+          if-no-files-found: error
+
+      - name: Publier l'installateur dans les Releases
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          TAG="v$VERSION"
+          FICHIER="dist/La-Roue-Setup-$VERSION.exe"
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release upload "$TAG" "$FICHIER" --clobber
+          else
+            gh release create "$TAG" "$FICHIER" --target "$GITHUB_SHA" --title "La Roue $VERSION" \
+              --notes "Télécharger **La-Roue-Setup-$VERSION.exe** ci-dessous, puis double-cliquer dessus pour installer La Roue (icône sur le bureau et dans le menu Démarrer)."
+          fi

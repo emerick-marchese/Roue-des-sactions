@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="or" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFE9A3"/>
+      <stop offset="0.45" stop-color="#F5B83D"/>
+      <stop offset="1" stop-color="#B9771A"/>
+    </linearGradient>
+    <radialGradient id="cadre" cx="0.5" cy="0.45" r="0.6">
+      <stop offset="0.7" stop-color="#2A1E5C"/>
+      <stop offset="1" stop-color="#120C2E"/>
+    </radialGradient>
+    <radialGradient id="moyeu" cx="0.4" cy="0.35" r="0.7">
+      <stop offset="0" stop-color="#FFF6D6"/>
+      <stop offset="0.5" stop-color="#F5B83D"/>
+      <stop offset="1" stop-color="#9C5F10"/>
+    </radialGradient>
+    <radialGradient id="reflet" cx="0.35" cy="0.25" r="0.75">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.35"/>
+      <stop offset="0.6" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="fleche" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FF6B8F"/>
+      <stop offset="1" stop-color="#D1124A"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Cadre et anneau doré -->
+  <circle cx="128" cy="134" r="118" fill="url(#cadre)"/>
+  <circle cx="128" cy="134" r="104" fill="url(#or)"/>
+
+  <!-- Parts (8 × 45°, centre 128,134, rayon 96) -->
+  <g stroke="#FFF6DD" stroke-width="2.5" stroke-linejoin="round">
+    <path d="M128 134 L128 38 A96 96 0 0 1 195.9 66.1 Z" fill="#FF3D7F"/>
+    <path d="M128 134 L195.9 66.1 A96 96 0 0 1 224 134 Z" fill="#FF8A3D"/>
+    <path d="M128 134 L224 134 A96 96 0 0 1 195.9 201.9 Z" fill="#FFC93C"/>
+    <path d="M128 134 L195.9 201.9 A96 96 0 0 1 128 230 Z" fill="#2ED47A"/>
+    <path d="M128 134 L128 230 A96 96 0 0 1 60.1 201.9 Z" fill="#1FB5E9"/>
+    <path d="M128 134 L60.1 201.9 A96 96 0 0 1 32 134 Z" fill="#4D6BFF"/>
+    <path d="M128 134 L32 134 A96 96 0 0 1 60.1 66.1 Z" fill="#9B4DFF"/>
+    <path d="M128 134 L60.1 66.1 A96 96 0 0 1 128 38 Z" fill="#E84DE0"/>
+  </g>
+  <circle cx="128" cy="134" r="96" fill="url(#reflet)"/>
+
+  <!-- Ampoules -->
+  <g fill="#FFF3C4">
+    <circle cx="128" cy="22" r="5"/>
+    <circle cx="207.2" cy="54.8" r="5"/>
+    <circle cx="240" cy="134" r="5"/>
+    <circle cx="207.2" cy="213.2" r="5"/>
+    <circle cx="128" cy="246" r="5"/>
+    <circle cx="48.8" cy="213.2" r="5"/>
+    <circle cx="16" cy="134" r="5"/>
+    <circle cx="48.8" cy="54.8" r="5"/>
+  </g>
+
+  <!-- Moyeu -->
+  <circle cx="128" cy="134" r="24" fill="url(#moyeu)" stroke="#7A4A0C" stroke-width="2"/>
+  <circle cx="121" cy="127" r="7" fill="#fff" opacity="0.55"/>
+
+  <!-- Flèche -->
+  <path d="M128 62 L108 16 Q128 4 148 16 Z" fill="url(#fleche)" stroke="#fff" stroke-width="5" stroke-linejoin="round"/>
+  <circle cx="128" cy="20" r="6" fill="url(#or)" stroke="#7A4A0C" stroke-width="1.5"/>
+</svg>
