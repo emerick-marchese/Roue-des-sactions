@@ -5,6 +5,16 @@ Application de bureau Windows du serveur Discord **Roblox France**
 chances réglables pour chaque choix, le claquement de la flèche sur les picots, des confettis
 et un historique des tirages.
 
+*Outil communautaire, non affilié à Roblox Corporation.*
+
+## Download
+
+**[Download the latest Windows installer](https://github.com/emerick-marchese/roue-des-sactions/releases/latest)**
+(`Roue-des-sanctions-Setup-<version>.exe`, Windows 10/11, 64-bit).
+
+Free code signing provided by [SignPath.io](https://about.signpath.io/), certificate by
+[SignPath Foundation](https://signpath.org/). See the [code signing policy](#code-signing-policy).
+
 ## Installer
 
 1. Télécharger **`Roue-des-sanctions-Setup-<version>.exe`** dans les
@@ -63,3 +73,23 @@ npm run dist       # fabrique dist/La-Roue-Setup-<version>.exe
 | `src/js/confettis.js` | Confettis |
 | `build/icon.svg` | Icône de l'appli ; `npm run icone` régénère `build/icon.ico` et `src/img/icon.png` (Playwright requis) |
 | `src/img/robloxfr.png` | Logo du serveur Roblox France, en haut à gauche de l'appli |
+
+## Code signing policy
+
+Free code signing provided by [SignPath.io](https://about.signpath.io/), certificate by
+[SignPath Foundation](https://signpath.org/).
+
+Windows releases are built from this repository's source code by GitHub Actions
+(`.github/workflows/windows.yml`); only those builds are submitted for signing.
+
+- Committers and reviewers: [emerick-marchese](https://github.com/emerick-marchese)
+- Approvers: [emerick-marchese](https://github.com/emerick-marchese)
+
+## Privacy
+
+This program will not transfer any information to other networked systems unless
+specifically requested by the user or the person installing or operating it.
+
+Wheels, settings and draw history are stored only on the user's computer
+(`%APPDATA%\La Roue`). The only network action is the « discord.gg/robloxfr » button, which
+opens the Discord invite in the web browser when the user clicks it.
