@@ -118,7 +118,6 @@
     vitesse: (tours) => Sons.vitesse(tours),
     fin: finDuTirage,
     lancement: (options) => lancer(options),
-    logo: "img/robloxfr.png",
   });
 
   function appliquerReglagesSon() {

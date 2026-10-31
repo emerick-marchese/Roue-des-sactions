@@ -83,15 +83,6 @@
       this.S = 0;
       this.dpr = 1;
       this.dernierT = performance.now();
-      this.logo = null;
-      if (rappels.logo) {
-        const img = new Image();
-        img.onload = () => {
-          this.logo = img;
-          if (this.S) this.preparerVerre();
-        };
-        img.src = rappels.logo;
-      }
 
       new ResizeObserver(() => this.redimensionner()).observe(canvas.parentElement);
       this.brancherSouris();
@@ -651,23 +642,12 @@
       ctx.beginPath();
       ctx.arc(0, 0, m * 0.72, 0, Math.PI * 2);
       ctx.stroke();
-      if (this.logo) {
-        // Logo au centre, rogné en cercle ; le carré blanc tient dans le disque.
-        const ri = m * 0.8;
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(0, 0, ri, 0, Math.PI * 2);
-        ctx.clip();
-        ctx.drawImage(this.logo, -ri * 1.13, -ri * 1.13, ri * 2.26, ri * 2.26);
-        ctx.restore();
-      } else {
-        ctx.fillStyle = "#FFE3A0";
-        ctx.font = `800 ${Math.round(m * 0.27)}px "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif`;
-        ctx.letterSpacing = `${(m * 0.03).toFixed(1)}px`;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText("LANCER", m * 0.015, m * 0.03);
-      }
+      ctx.fillStyle = "#FFE3A0";
+      ctx.font = `800 ${Math.round(m * 0.27)}px "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif`;
+      ctx.letterSpacing = `${(m * 0.03).toFixed(1)}px`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("LANCER", m * 0.015, m * 0.03);
       this.imgVerre = c;
     }
 

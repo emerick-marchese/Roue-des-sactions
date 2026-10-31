@@ -20,7 +20,7 @@ Pour désinstaller : *Paramètres → Applications → Roue des sanctions → D�
 
 ## Utilisation
 
-- **Lancer** : bouton « Lancer la roue », clic sur le logo au centre, touche <kbd>Espace</kbd>,
+- **Lancer** : bouton « Lancer la roue », clic sur le moyeu « LANCER », touche <kbd>Espace</kbd>,
   ou attraper la roue à la souris et la lancer d'un geste (plus le geste est rapide, plus elle tourne).
 - **Chances** : chaque choix a un nom, une couleur (clic sur la pastille) et un nombre de
   chances réglé avec − et + (ou la molette). Plus il a de chances, plus sa part de roue est
@@ -61,4 +61,5 @@ npm run dist       # fabrique dist/La-Roue-Setup-<version>.exe
 | `src/js/sons.js` | Sons synthétisés : claquements, roulement, élan, fanfare |
 | `src/js/app.js` | Roues enregistrées, éditeur des parts, historique, réglages |
 | `src/js/confettis.js` | Confettis |
-| `build/logo-robloxfr.webp` | Logo du serveur ; `npm run icone` régénère `build/icon.ico`, `src/img/icon.png` et `src/img/robloxfr.png` (Playwright requis) |
+| `build/icon.svg` | Icône de l'appli ; `npm run icone` régénère `build/icon.ico` et `src/img/icon.png` (Playwright requis) |
+| `src/img/robloxfr.png` | Logo du serveur Roblox France, en haut à gauche de l'appli |
