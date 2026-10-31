@@ -1,10 +1,10 @@
 {
   "name": "la-roue",
-  "productName": "La Roue",
-  "version": "1.0.0",
-  "description": "La Roue : une roue à tirage au sort, avec pourcentages, noms et vrai bruit de roue.",
+  "productName": "Roue des sanctions",
+  "version": "1.1.0",
+  "description": "Roue des sanctions du serveur Discord Roblox France (discord.gg/robloxfr).",
   "author": {
-    "name": "La Roue"
+    "name": "Roblox France"
   },
   "license": "UNLICENSED",
   "private": true,
@@ -20,8 +20,8 @@
   },
   "build": {
     "appId": "fr.cogec.laroue",
-    "productName": "La Roue",
-    "copyright": "© 2026 La Roue",
+    "productName": "Roue des sanctions",
+    "copyright": "© 2026 Roblox France",
     "directories": {
       "output": "dist",
       "buildResources": "build"
@@ -55,16 +55,16 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": "always",
       "createStartMenuShortcut": true,
-      "shortcutName": "La Roue",
+      "shortcutName": "Roue des sanctions",
       "runAfterFinish": true,
       "installerIcon": "build/icon.ico",
       "uninstallerIcon": "build/icon.ico",
-      "uninstallDisplayName": "La Roue",
+      "uninstallDisplayName": "Roue des sanctions",
       "language": "1036",
       "installerLanguages": [
         "fr_FR"
       ],
-      "artifactName": "La-Roue-Setup-${version}.${ext}"
+      "artifactName": "Roue-des-sanctions-Setup-${version}.${ext}"
     }
   }
 }

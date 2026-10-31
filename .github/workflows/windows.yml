@@ -1,4 +1,4 @@
-name: La Roue – installateur Windows
+name: Installateur Windows
 
 on:
   push:
@@ -28,7 +28,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: La-Roue-Setup
+          name: Roue-des-sanctions-Setup
           path: dist/*.exe
           if-no-files-found: error
 
@@ -39,10 +39,10 @@ jobs:
         run: |
           VERSION=$(node -p "require('./package.json').version")
           TAG="v$VERSION"
-          FICHIER="dist/La-Roue-Setup-$VERSION.exe"
+          FICHIER="dist/Roue-des-sanctions-Setup-$VERSION.exe"
           if gh release view "$TAG" > /dev/null 2>&1; then
             gh release upload "$TAG" "$FICHIER" --clobber
           else
-            gh release create "$TAG" "$FICHIER" --target "$GITHUB_SHA" --title "La Roue $VERSION" \
-              --notes "Télécharger **La-Roue-Setup-$VERSION.exe** ci-dessous, puis double-cliquer dessus pour installer La Roue (icône sur le bureau et dans le menu Démarrer)."
+            gh release create "$TAG" "$FICHIER" --target "$GITHUB_SHA" --title "Roue des sanctions $VERSION" \
+              --notes "Télécharger **Roue-des-sanctions-Setup-$VERSION.exe** ci-dessous, puis double-cliquer dessus pour installer la Roue des sanctions (icône sur le bureau et dans le menu Démarrer)."
           fi

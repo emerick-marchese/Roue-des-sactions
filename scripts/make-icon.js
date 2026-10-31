@@ -1,4 +1,5 @@
-// Génère build/icon.ico (Windows) et src/img/icon.png à partir de build/icon.svg.
+// Génère build/icon.ico (Windows), src/img/icon.png et src/img/robloxfr.png
+// à partir du logo du serveur Roblox France (build/logo-robloxfr.webp).
 // À relancer seulement si l'icône change. Nécessite Playwright (Chromium) :
 //   npx playwright install chromium   puis   node scripts/make-icon.js
 const fs = require("fs");
@@ -6,7 +7,7 @@ const path = require("path");
 const { chromium } = require("playwright");
 
 const racine = path.join(__dirname, "..");
-const svg = fs.readFileSync(path.join(racine, "build/icon.svg"), "utf8");
+const logo = "data:image/webp;base64," + fs.readFileSync(path.join(racine, "build/logo-robloxfr.webp")).toString("base64");
 const TAILLES = [16, 20, 24, 32, 40, 48, 64, 128, 256];
 
 // Image BMP 32 bits (BGRA, de bas en haut) + masque ET, telle qu'attendue dans un .ico.
@@ -43,16 +44,24 @@ function bmpIco(taille, rgba) {
 (async () => {
   const navigateur = await chromium.launch();
   const page = await navigateur.newPage();
-  const images = await page.evaluate(
-    async ({ svg, tailles }) => {
+  const resultat = await page.evaluate(
+    async ({ logo, tailles }) => {
       const img = new Image();
-      img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svg)));
+      img.src = logo;
       await img.decode();
-      return tailles.map((t) => {
+      // Logo carré brut, pour l'intérieur de l'application.
+      const brut = document.createElement("canvas");
+      brut.width = brut.height = 512;
+      brut.getContext("2d").drawImage(img, 0, 0, 512, 512);
+      const icones = tailles.map((t) => {
+        // Icône : coins arrondis, comme les icônes d'applications Windows.
         const c = document.createElement("canvas");
         c.width = c.height = t;
         const ctx = c.getContext("2d");
         ctx.imageSmoothingQuality = "high";
+        ctx.beginPath();
+        ctx.roundRect(0, 0, t, t, t * 0.22);
+        ctx.clip();
         ctx.drawImage(img, 0, 0, t, t);
         return {
           taille: t,
@@ -60,9 +69,11 @@ function bmpIco(taille, rgba) {
           png: c.toDataURL("image/png").split(",")[1],
         };
       });
+      return { icones, brut: brut.toDataURL("image/png").split(",")[1] };
     },
-    { svg, tailles: [...TAILLES, 512] }
+    { logo, tailles: [...TAILLES, 512] }
   );
+  const images = resultat.icones;
   await navigateur.close();
 
   const entrees = images
@@ -93,5 +104,6 @@ function bmpIco(taille, rgba) {
   const grande = images.find((i) => i.taille === 512);
   fs.mkdirSync(path.join(racine, "src/img"), { recursive: true });
   fs.writeFileSync(path.join(racine, "src/img/icon.png"), Buffer.from(grande.png, "base64"));
-  console.log("build/icon.ico et src/img/icon.png générés.");
+  fs.writeFileSync(path.join(racine, "src/img/robloxfr.png"), Buffer.from(resultat.brut, "base64"));
+  console.log("build/icon.ico, src/img/icon.png et src/img/robloxfr.png générés.");
 })();

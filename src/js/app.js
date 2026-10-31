@@ -12,19 +12,30 @@
     normale: { duree: 8, tours: 6 },
     longue: { duree: 12.5, tours: 8 },
   };
-  const PART_MAX = 100;
+  const CHANCES_MAX = 99;
 
   const $ = (s) => document.querySelector(s);
   const uid = () => Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-5);
-  const fmt = (n) => (Math.round(n * 100) / 100).toLocaleString("fr-FR", { maximumFractionDigits: 2 });
+  const fmt = (n) => (Math.round(n * 10) / 10).toLocaleString("fr-FR", { maximumFractionDigits: n >= 10 ? 0 : 1 });
   const echapper = (s) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   const total = (segments) => segments.reduce((t, s) => t + s.weight, 0);
 
-  function lireNombre(texte) {
-    const t = String(texte).replace(/[\s%  ]/g, "").replace(",", ".");
+  // Nombre de chances d'un choix : entier de 0 (absent de la roue) à 99.
+  function lireChances(texte) {
+    const t = String(texte).replace(/\s/g, "").replace(",", ".");
     if (t === "" || !/^\d*\.?\d*$/.test(t)) return null;
     const n = Number(t);
-    return Number.isFinite(n) ? Math.min(PART_MAX, Math.max(0, Math.round(n * 100) / 100)) : null;
+    return Number.isFinite(n) ? Math.min(CHANCES_MAX, Math.max(0, Math.round(n))) : null;
+  }
+
+  // Anciennes roues (parts en pourcentage, ex. 33,33) : converties en nombres de chances entiers.
+  function enChances(segments) {
+    if (!segments.length) return;
+    if (segments.every((s) => Math.abs(s.weight - segments[0].weight) < 0.05)) {
+      segments.forEach((s) => (s.weight = segments[0].weight > 0 ? 1 : 0));
+      return;
+    }
+    segments.forEach((s) => (s.weight = s.weight > 0 ? Math.min(CHANCES_MAX, Math.max(1, Math.round(s.weight))) : 0));
   }
 
   // ----- Données -----
@@ -39,19 +50,19 @@
   }
 
   function donneesParDefaut() {
-    const r = nouvelleRoue("On mange quoi ?", [
-      ["Pizza", 25],
-      ["Burger", 20],
-      ["Sushi", 15],
-      ["Tacos", 15],
-      ["Salade", 10],
-      ["Crêpes", 15],
+    const r = nouvelleRoue("Roue des sanctions", [
+      ["Avertissement", 4],
+      ["Mute 10 min", 3],
+      ["Mute 1 h", 2],
+      ["Mute 24 h", 1],
+      ["Kick", 1],
+      ["Gracié", 1],
     ]);
     return {
-      version: 1,
+      version: 2,
       roues: [r],
       actuelle: r.id,
-      reglages: { volume: 0.8, son: true, timbre: "plastique", duree: "normale", confettis: true, retirerGagnant: false, panneau: true },
+      reglages: { volume: 0.7, son: true, timbre: "plastique", duree: "normale", confettis: true, retirerGagnant: false, panneau: true },
     };
   }
 
@@ -60,6 +71,10 @@
       const d = JSON.parse(localStorage.getItem(CLE));
       if (d && Array.isArray(d.roues) && d.roues.length) {
         d.reglages = { ...donneesParDefaut().reglages, ...d.reglages };
+        if (!(d.version >= 2)) {
+          d.roues.forEach((r) => enChances(r.segments));
+          d.version = 2;
+        }
         if (!d.roues.some((r) => r.id === d.actuelle)) d.actuelle = d.roues[0].id;
         return d;
       }
@@ -95,27 +110,6 @@
     return PALETTE.find((c, i) => i >= segments.length % PALETTE.length && !voisines.includes(c)) || PALETTE[0];
   }
 
-  const partsEgales = (segments) =>
-    segments.length > 0 && segments.every((s) => Math.abs(s.weight - segments[0].weight) <= 0.02) && Math.abs(total(segments) - 100) <= 0.05;
-
-  function repartirEgal(segments) {
-    if (!segments.length) return;
-    const part = Math.floor((100 / segments.length) * 100) / 100;
-    segments.forEach((s) => (s.weight = part));
-    segments[segments.length - 1].weight = Math.round((100 - part * (segments.length - 1)) * 100) / 100;
-  }
-
-  function ajusterA100(segments) {
-    const t = total(segments);
-    if (t <= 0) return repartirEgal(segments);
-    segments.forEach((s) => (s.weight = Math.round(((s.weight * 100) / t) * 100) / 100));
-    const ecart = Math.round((100 - total(segments)) * 100) / 100;
-    if (ecart) {
-      const plusGrand = segments.reduce((a, b) => (b.weight > a.weight ? b : a));
-      plusGrand.weight = Math.round((plusGrand.weight + ecart) * 100) / 100;
-    }
-  }
-
   // ----- Roue et sons -----
 
   const btnLancer = $("#btn-lancer");
@@ -124,6 +118,7 @@
     vitesse: (tours) => Sons.vitesse(tours),
     fin: finDuTirage,
     lancement: (options) => lancer(options),
+    logo: "img/robloxfr.png",
   });
 
   function appliquerReglagesSon() {
@@ -233,9 +228,12 @@
         <div class="barre-part"></div>
         <button class="pastille" style="--c:${s.color}" title="Changer la couleur" aria-label="Couleur"></button>
         <input class="nom" value="${echapper(s.label)}" maxlength="60" placeholder="Sans nom" aria-label="Nom du choix" />
-        <label class="pourcent" title="Part de la roue (molette ou flèches ↑ ↓ pour ajuster)">
-          <input class="valeur" inputmode="decimal" value="${fmt(s.weight)}" aria-label="Part en pourcentage" /><span>%</span>
-        </label>
+        <div class="chances" title="Nombre de chances : plus il y en a, plus la part est grande">
+          <button class="moins" aria-label="Moins de chances">−</button>
+          <input class="valeur" inputmode="numeric" value="${s.weight}" aria-label="Nombre de chances" />
+          <button class="plus" aria-label="Plus de chances">+</button>
+        </div>
+        <span class="pct"></span>
         <button class="suppr" title="Retirer ce choix" aria-label="Retirer"><svg class="ic"><use href="#i-fermer" /></svg></button>
       </li>`
       )
@@ -246,7 +244,7 @@
     majParts();
   }
 
-  // Met à jour les barres de proportion et le total sans reconstruire la liste (garde le focus).
+  // Met à jour les pourcentages affichés sans reconstruire la liste (garde le focus).
   function majParts() {
     const r = roueActuelle();
     const t = total(r.segments);
@@ -257,27 +255,9 @@
       li.style.setProperty("--part", `${chance}%`);
       li.style.setProperty("--c", s.color);
       li.classList.toggle("nulle", !(s.weight > 0));
-      li.querySelector(".pourcent").title =
-        Math.abs(t - 100) > 0.005 && t > 0
-          ? `Chance réelle : ${fmt(chance)} % (les parts sont réparties au prorata)`
-          : "Part de la roue (molette ou flèches ↑ ↓ pour ajuster)";
-    }
-
-    const el = $("#total");
-    const juste = Math.abs(t - 100) <= 0.005;
-    el.className = "total " + (juste ? "ok" : r.segments.length ? "ecart" : "");
-    if (!r.segments.length) {
-      el.innerHTML = "";
-    } else if (juste) {
-      el.innerHTML = `<svg class="ic"><use href="#i-ok" /></svg><span>Total : <b>100 %</b></span>`;
-    } else {
-      el.innerHTML = `<span>Total : <b>${fmt(t)} %</b><small>${
-        t > 0 ? "La roue répartit les parts au prorata." : "Toutes les parts sont à 0 %."
-      }</small></span><button class="btn mini" id="btn-ajuster"><svg class="ic"><use href="#i-pourcent" /></svg>Ramener à 100 %</button>`;
-      $("#btn-ajuster").addEventListener("click", () => {
-        ajusterA100(r.segments);
-        modifie(true);
-      });
+      li.querySelector(".pct").textContent = s.weight > 0 ? `${fmt(chance)} %` : "retiré";
+      li.querySelector(".moins").disabled = s.weight <= 0;
+      li.querySelector(".plus").disabled = s.weight >= CHANCES_MAX;
     }
     rafraichirRoue();
   }
@@ -300,7 +280,7 @@
       s.label = e.target.value;
       modifie();
     } else if (e.target.classList.contains("valeur")) {
-      const n = lireNombre(e.target.value);
+      const n = lireChances(e.target.value);
       if (n != null) {
         s.weight = n;
         modifie();
@@ -310,21 +290,21 @@
 
   liste.addEventListener("focusout", (e) => {
     const s = segmentDe(e.target);
-    if (s && e.target.classList.contains("valeur")) e.target.value = fmt(s.weight);
+    if (s && e.target.classList.contains("valeur")) e.target.value = s.weight;
   });
 
-  function pousserPart(input, pas) {
-    const s = segmentDe(input);
+  function pousserPart(el, pas) {
+    const s = segmentDe(el);
     if (!s) return;
-    s.weight = Math.min(PART_MAX, Math.max(0, Math.round((s.weight + pas) * 100) / 100));
-    input.value = fmt(s.weight);
+    s.weight = Math.min(CHANCES_MAX, Math.max(0, s.weight + pas));
+    el.closest(".part").querySelector(".valeur").value = s.weight;
     modifie();
   }
 
   liste.addEventListener("keydown", (e) => {
     if (e.target.classList.contains("valeur") && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
       e.preventDefault();
-      pousserPart(e.target, (e.key === "ArrowUp" ? 1 : -1) * (e.shiftKey ? 5 : 1));
+      pousserPart(e.target, e.key === "ArrowUp" ? 1 : -1);
     } else if (e.key === "Enter" && e.target.matches("input")) {
       e.target.blur();
     }
@@ -333,9 +313,9 @@
   liste.addEventListener(
     "wheel",
     (e) => {
-      if (!e.target.classList.contains("valeur") || document.activeElement !== e.target) return;
+      if (!e.target.closest(".chances")) return;
       e.preventDefault();
-      pousserPart(e.target, (e.deltaY < 0 ? 1 : -1) * (e.shiftKey ? 5 : 1));
+      pousserPart(e.target, e.deltaY < 0 ? 1 : -1);
     },
     { passive: false }
   );
@@ -344,16 +324,16 @@
     const s = segmentDe(e.target);
     if (!s) return;
     if (e.target.closest(".suppr")) retirerSegment(s.id);
+    else if (e.target.closest(".plus")) pousserPart(e.target, 1);
+    else if (e.target.closest(".moins")) pousserPart(e.target, -1);
     else if (e.target.closest(".pastille")) ouvrirPalette(e.target.closest(".pastille"), s);
   });
 
-  function ajouterChoix(labels, parts = []) {
+  function ajouterChoix(labels, chances = []) {
     const r = roueActuelle();
-    const egal = r.segments.length === 0 || partsEgales(r.segments);
     labels.forEach((label, i) => {
-      r.segments.push({ id: uid(), label, weight: parts[i] ?? 10, color: couleurSuivante(r.segments) });
+      r.segments.push({ id: uid(), label, weight: chances[i] ?? 1, color: couleurSuivante(r.segments) });
     });
-    if (egal && parts.every((p) => p == null)) repartirEgal(r.segments);
     modifie(true);
   }
 
@@ -361,9 +341,7 @@
     const r = roueActuelle();
     const i = r.segments.findIndex((s) => s.id === id);
     if (i < 0) return;
-    const egal = partsEgales(r.segments);
     const [s] = r.segments.splice(i, 1);
-    if (egal) repartirEgal(r.segments);
     modifie(true);
     Sons.pop(0.8);
     if (!silencieux) notifier(`« ${s.label.trim() || "Sans nom"} » retiré de la roue.`);
@@ -388,7 +366,7 @@
   });
 
   $("#btn-egal").addEventListener("click", () => {
-    repartirEgal(roueActuelle().segments);
+    roueActuelle().segments.forEach((s) => (s.weight = 1));
     modifie(true);
   });
 
@@ -420,12 +398,11 @@
       if (!propre) continue;
       const m = propre.match(/^(.*?)\s*[;:\t|]\s*(\d+(?:[.,]\d+)?)\s*%?$/) || propre.match(/^(.*?\S)\s+(\d+(?:[.,]\d+)?)\s*%$/);
       labels.push((m ? m[1] : propre).slice(0, 60));
-      parts.push(m ? lireNombre(m[2]) : null);
+      parts.push(m ? lireChances(m[2]) : null);
     }
     if (!labels.length) return $("#champ-lot").focus();
     if ($("#lot-remplacer").checked) roueActuelle().segments = [];
-    const avecParts = parts.some((p) => p != null);
-    ajouterChoix(labels, avecParts ? parts.map((p) => p ?? 10) : []);
+    ajouterChoix(labels, parts);
     fermer("#modale-lot");
     notifier(`${labels.length} choix ajouté${labels.length > 1 ? "s" : ""}.`);
   });
@@ -480,11 +457,14 @@
       `<p class="menu-titre">Mes roues</p>` +
       donnees.roues
         .map(
-          (r) => `<button role="menuitem" data-id="${r.id}" class="${r.id === donnees.actuelle ? "actuelle" : ""}">
-            <span class="puces">${r.segments.slice(0, 5).map((s) => `<i style="--c:${s.color}"></i>`).join("")}</span>
-            <span class="nom">${echapper(r.titre.trim() || "Ma roue")}</span>
-            <span class="detail">${r.segments.length} choix</span>
-          </button>`
+          (r) => `<div class="menu-ligne${r.id === donnees.actuelle ? " actuelle" : ""}">
+            <button role="menuitem" data-id="${r.id}">
+              <span class="puces">${r.segments.slice(0, 5).map((s) => `<i style="--c:${s.color}"></i>`).join("")}</span>
+              <span class="nom">${echapper(r.titre.trim() || "Ma roue")}</span>
+              <span class="detail">${r.segments.length} choix</span>
+            </button>
+            <button class="suppr-roue" data-suppr="${r.id}" title="Supprimer cette roue" aria-label="Supprimer cette roue"><svg class="ic"><use href="#i-poubelle" /></svg></button>
+          </div>`
         )
         .join("") +
       `<button role="menuitem" data-nouvelle class="nouvelle"><svg class="ic"><use href="#i-plus" /></svg>Nouvelle roue</button>`;
@@ -511,12 +491,18 @@
   menu.addEventListener("click", (e) => {
     const b = e.target.closest("button");
     if (!b) return;
+    if (b.dataset.suppr) {
+      e.stopPropagation();
+      fermerMenus();
+      supprimerRoue(b.dataset.suppr);
+      return;
+    }
     if (b.dataset.nouvelle != null) {
       const r = nouvelleRoue("Nouvelle roue", [
-        ["Choix 1", 25],
-        ["Choix 2", 25],
-        ["Choix 3", 25],
-        ["Choix 4", 25],
+        ["Choix 1", 1],
+        ["Choix 2", 1],
+        ["Choix 3", 1],
+        ["Choix 4", 1],
       ]);
       donnees.roues.push(r);
       changerDeRoue(r.id);
@@ -553,15 +539,20 @@
     notifier("Roue dupliquée.");
   });
 
-  $("#btn-supprimer-roue").addEventListener("click", async () => {
-    const r = roueActuelle();
+  async function supprimerRoue(id) {
+    const r = donnees.roues.find((x) => x.id === id);
+    if (!r || roue.tourne) return;
     const ok = await confirmer(`Supprimer la roue « ${r.titre.trim() || "Ma roue"} » et son historique ?`);
     if (!ok) return;
-    donnees.roues = donnees.roues.filter((x) => x.id !== r.id);
+    const i = donnees.roues.indexOf(r);
+    donnees.roues.splice(i, 1);
     if (!donnees.roues.length) donnees.roues.push(donneesParDefaut().roues[0]);
-    changerDeRoue(donnees.roues[0].id);
+    if (donnees.actuelle === id) changerDeRoue(donnees.roues[Math.min(i, donnees.roues.length - 1)].id);
+    else sauver();
     notifier("Roue supprimée.");
-  });
+  }
+
+  $("#btn-supprimer-roue").addEventListener("click", () => supprimerRoue(donnees.actuelle));
 
   $("#btn-exporter").addEventListener("click", () => {
     const r = roueActuelle();
@@ -592,11 +583,12 @@
         segments: d.segments.slice(0, 500).map((s, i) => ({
           id: uid(),
           label: String(s.label ?? "").slice(0, 60),
-          weight: lireNombre(s.weight) ?? 0,
+          weight: Number(s.weight) || 0,
           color: /^#[0-9a-f]{6}$/i.test(s.color) ? s.color.toUpperCase() : PALETTE[i % PALETTE.length],
         })),
         historique: [],
       };
+      enChances(r.segments);
       donnees.roues.push(r);
       changerDeRoue(r.id);
       montrerPage("parts");
@@ -684,7 +676,7 @@
   }
 
   function essaiSon() {
-    [0, 0.085, 0.18, 0.29, 0.42, 0.6, 0.86].forEach((d, i) => Sons.clic(1 - i * 0.07, d));
+    [0, 0.085, 0.18, 0.29, 0.42, 0.6, 0.86].forEach((d, i) => Sons.clic(0.7 + i * 0.05, d));
   }
 
   function bascule(id, cle, apres) {
@@ -736,6 +728,13 @@
     else if (document.fullscreenElement) document.exitFullscreen();
     else document.documentElement.requestFullscreen();
   });
+  const ouvrirDiscord = (e) => {
+    e.preventDefault();
+    window.open("https://discord.gg/robloxfr", "_blank");
+  };
+  $("#btn-discord").addEventListener("click", ouvrirDiscord);
+  $("#lien-discord").addEventListener("click", ouvrirDiscord);
+
   if (window.bureau) {
     window.bureau.surPleinEcran((actif) => document.body.classList.toggle("plein-ecran", actif));
     window.bureau.version().then((v) => ($("#version").textContent = "v" + v));

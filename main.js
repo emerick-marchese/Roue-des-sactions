@@ -1,9 +1,11 @@
 // Processus principal : une seule fenêtre, qui retient sa taille et sa position.
-const { app, BrowserWindow, Menu, ipcMain, screen } = require("electron");
+const { app, BrowserWindow, Menu, ipcMain, screen, shell } = require("electron");
 const fs = require("fs");
 const path = require("path");
 
 app.setAppUserModelId("fr.cogec.laroue");
+// Les roues enregistrées restent dans le dossier de la première version (« La Roue »).
+app.setPath("userData", path.join(app.getPath("appData"), "La Roue"));
 // Les sons de la roue doivent pouvoir jouer sans attendre un premier clic.
 app.commandLine.appendSwitch("autoplay-policy", "no-user-gesture-required");
 
@@ -47,7 +49,7 @@ function creerFenetre() {
     minWidth: 980,
     minHeight: 660,
     show: false,
-    title: "La Roue",
+    title: "Roue des sanctions · Roblox France",
     backgroundColor: FOND,
     icon: path.join(__dirname, "src/img/icon.png"),
     titleBarStyle: "hidden",
@@ -68,8 +70,11 @@ function creerFenetre() {
   fenetre.on("enter-full-screen", () => fenetre.webContents.send("plein-ecran", true));
   fenetre.on("leave-full-screen", () => fenetre.webContents.send("plein-ecran", false));
 
-  // L'application ne navigue jamais ailleurs et n'ouvre pas d'autres fenêtres.
-  fenetre.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
+  // L'application ne navigue jamais ailleurs ; seul le lien du Discord s'ouvre, dans le navigateur.
+  fenetre.webContents.setWindowOpenHandler(({ url }) => {
+    if (/^https:\/\/discord\.gg\//.test(url)) shell.openExternal(url);
+    return { action: "deny" };
+  });
   fenetre.webContents.on("will-navigate", (e) => e.preventDefault());
 
   fenetre.webContents.on("before-input-event", (e, touche) => {

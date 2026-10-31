@@ -148,8 +148,50 @@ code {
 }
 
 .marque img {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  box-shadow: 0 0 0 1px rgba(220, 228, 255, 0.25);
+}
+
+.marque-texte {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.marque-texte b {
+  font-size: 14px;
+}
+
+.marque-texte small {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--texte-2);
+}
+
+.discord {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  padding: 0 12px 0 10px;
+  border-radius: 999px;
+  background: #5865f2;
+  color: #fff;
+  font-weight: 600;
+  font-size: 13px;
+  box-shadow: 0 4px 14px rgba(88, 101, 242, 0.35);
+  transition: filter 0.15s, transform 0.12s;
+}
+
+.discord:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.apropos a {
+  color: #aab3ff;
 }
 
 .vide {
@@ -237,6 +279,44 @@ code {
   color: var(--texte-3);
 }
 
+.menu-ligne {
+  display: flex;
+  align-items: center;
+  border-radius: 9px;
+}
+
+.menu-ligne:hover {
+  background: var(--surface-2);
+}
+
+.menu-ligne.actuelle {
+  background: rgba(255, 201, 74, 0.12);
+}
+
+.menu .menu-ligne > button[data-id]:hover {
+  background: none;
+}
+
+.menu .suppr-roue {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  margin-right: 4px;
+  flex: none;
+  justify-content: center;
+  color: var(--texte-3);
+}
+
+.menu .suppr-roue .ic {
+  width: 16px;
+  height: 16px;
+}
+
+.menu .suppr-roue:hover {
+  background: rgba(255, 90, 106, 0.16);
+  color: var(--rouge);
+}
+
 .menu button {
   width: 100%;
   display: flex;
@@ -251,9 +331,6 @@ code {
   background: var(--surface-2);
 }
 
-.menu button.actuelle {
-  background: rgba(255, 201, 74, 0.12);
-}
 
 .menu .nom {
   flex: 1;
@@ -593,7 +670,7 @@ textarea:focus {
 }
 
 .entete-liste span:last-child {
-  margin-right: 50px;
+  margin-right: 104px;
 }
 
 .entete-liste b {
@@ -687,37 +764,66 @@ textarea:focus {
   background: rgba(0, 0, 0, 0.18);
 }
 
-.pourcent {
+.chances {
   display: flex;
   align-items: center;
   height: 34px;
-  padding: 0 8px 0 4px;
-  border-radius: 8px;
+  border-radius: 9px;
   background: rgba(0, 0, 0, 0.22);
   border: 1px solid var(--bord);
-  cursor: text;
   flex: none;
+  overflow: hidden;
 }
 
-.pourcent:focus-within {
+.chances:focus-within {
   border-color: rgba(255, 201, 74, 0.6);
 }
 
-.pourcent input {
-  width: 52px;
+.chances button {
+  width: 28px;
+  height: 100%;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--texte-2);
+  transition: background 0.12s, color 0.12s;
+}
+
+.chances button:hover:not(:disabled) {
+  background: var(--surface-3);
+  color: var(--texte);
+}
+
+.chances button:disabled {
+  opacity: 0.3;
+}
+
+.chances input {
+  width: 30px;
   border: 0;
   background: none;
   outline: none;
-  text-align: right;
+  text-align: center;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   user-select: text;
 }
 
-.pourcent span {
+.pct {
+  width: 50px;
+  flex: none;
+  text-align: right;
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--c);
+  filter: brightness(1.25);
+}
+
+.part.nulle .pct {
   color: var(--texte-3);
-  font-weight: 600;
-  padding-left: 2px;
+  font-weight: 500;
+  filter: none;
 }
 
 .suppr {
@@ -779,49 +885,11 @@ textarea:focus {
   stroke-width: 2.6;
 }
 
-.total {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 44px;
-  margin-top: 14px;
-  padding: 8px 12px;
-  border-radius: 11px;
-  font-size: 13px;
-}
-
-.total:empty {
-  display: none;
-}
-
-.total > span {
-  flex: 1;
-}
-
-.total.ecart > span {
-  display: flex;
-  flex-direction: column;
-}
-
-.total small {
-  color: var(--texte-2);
-  font-size: 12px;
-}
-
-.total.ok {
-  background: rgba(46, 212, 122, 0.1);
-  border: 1px solid rgba(46, 212, 122, 0.25);
-  color: #8ff0bb;
-}
-
-.total.ok .ic {
-  color: var(--vert);
-}
-
-.total.ecart {
-  background: rgba(255, 169, 77, 0.1);
-  border: 1px solid rgba(255, 169, 77, 0.3);
-  color: #ffd09b;
+.aide-chances {
+  margin: 12px 2px 0;
+  color: var(--texte-3);
+  font-size: 12.5px;
+  line-height: 1.5;
 }
 
 .boutons-ligne {

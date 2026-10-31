@@ -83,6 +83,15 @@
       this.S = 0;
       this.dpr = 1;
       this.dernierT = performance.now();
+      this.logo = null;
+      if (rappels.logo) {
+        const img = new Image();
+        img.onload = () => {
+          this.logo = img;
+          if (this.S) this.preparerVerre();
+        };
+        img.src = rappels.logo;
+      }
 
       new ResizeObserver(() => this.redimensionner()).observe(canvas.parentElement);
       this.brancherSouris();
@@ -273,11 +282,14 @@
       if (!passages.length) return;
       passages.sort((x, y) => x - y);
       const vitesse = (haut - bas) / Math.max(dt, 1 / 240);
-      const force = borner(0.38 + vitesse / 1100, 0.38, 1);
+      // Plus la flèche claque souvent, plus chaque claquement est doux (sinon, au départ,
+      // des dizaines de claquements par seconde à pleine force agressent les oreilles).
+      const parSeconde = (vitesse * this.picots.length) / 360;
+      const force = borner(1.1 / (1 + parSeconde / 12), 0.14, 1);
       let dernier = -1;
       for (const f of passages) {
         const delai = f * dt;
-        if (dernier >= 0 && delai - dernier < 0.007) continue;
+        if (dernier >= 0 && delai - dernier < 0.02) continue;
         dernier = delai;
         if (this.rappels.clic) this.rappels.clic(force * (0.88 + hasard() * 0.12), delai);
       }
@@ -394,7 +406,8 @@
       const dpr = window.devicePixelRatio || 1;
       if (S <= 0 || (S === this.S && dpr === this.dpr)) return;
       this.S = S;
-      this.R = S / 2 - 2;
+      // La tête de la flèche monte jusqu'à 1,02 R : on garde la marge nécessaire.
+      this.R = S / 2 / 1.045;
       this.dpr = dpr;
       this.canvas.width = Math.round(S * dpr);
       this.canvas.height = Math.round(S * dpr);
@@ -638,12 +651,23 @@
       ctx.beginPath();
       ctx.arc(0, 0, m * 0.72, 0, Math.PI * 2);
       ctx.stroke();
-      ctx.fillStyle = "#FFE3A0";
-      ctx.font = `800 ${Math.round(m * 0.27)}px "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif`;
-      ctx.letterSpacing = `${(m * 0.03).toFixed(1)}px`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText("LANCER", m * 0.015, m * 0.03);
+      if (this.logo) {
+        // Logo au centre, rogné en cercle ; le carré blanc tient dans le disque.
+        const ri = m * 0.8;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(0, 0, ri, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.drawImage(this.logo, -ri * 1.13, -ri * 1.13, ri * 2.26, ri * 2.26);
+        ctx.restore();
+      } else {
+        ctx.fillStyle = "#FFE3A0";
+        ctx.font = `800 ${Math.round(m * 0.27)}px "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif`;
+        ctx.letterSpacing = `${(m * 0.03).toFixed(1)}px`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("LANCER", m * 0.015, m * 0.03);
+      }
       this.imgVerre = c;
     }
 

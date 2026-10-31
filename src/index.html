@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>La Roue</title>
+    <title>Roue des sanctions · Roblox France</title>
     <link rel="stylesheet" href="css/style.css" />
   </head>
   <body>
@@ -28,13 +28,17 @@
         <symbol id="i-roue" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="2" /><path d="M12 3v7M12 14v7M3 12h7M14 12h7M5.6 5.6l5 5M13.4 13.4l5 5M18.4 5.6l-5 5M10.6 13.4l-5 5" /></symbol>
         <symbol id="i-relancer" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5" /></symbol>
         <symbol id="i-ok" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></symbol>
+        <symbol id="i-discord" viewBox="0 0 24 24"><path d="M8.5 17.5 7 20c-2.5-.8-4.3-2-5-3 0-5 1.5-9.2 3.5-11.5C7 4.8 8.5 4.3 9.5 4l.7 1.4a14 14 0 0 1 3.6 0l.7-1.4c1 .3 2.5.8 4 1.5C20.5 7.8 22 12 22 17c-.7 1-2.5 2.2-5 3l-1.5-2.5" /><path d="M7 16.5c3 1.4 7 1.4 10 0" /><circle cx="9" cy="12" r="1.3" /><circle cx="15" cy="12" r="1.3" /></symbol>
         <symbol id="i-lecture" viewBox="0 0 24 24"><path d="M7 4v16l13-8z" /></symbol>
       </defs>
     </svg>
 
     <div class="app">
       <header class="barre">
-        <div class="marque"><img src="img/icon.png" alt="" /><span>La Roue</span></div>
+        <div class="marque">
+          <img src="img/robloxfr.png" alt="" />
+          <span class="marque-texte"><b>Roblox France</b><small>Roue des sanctions</small></span>
+        </div>
         <div class="selecteur">
           <button class="pilule" id="btn-roues" aria-haspopup="menu" aria-expanded="false" title="Changer de roue">
             <svg class="ic"><use href="#i-roue" /></svg>
@@ -44,6 +48,9 @@
           <div class="menu" id="menu-roues" role="menu" hidden></div>
         </div>
         <div class="vide"></div>
+        <button class="discord" id="btn-discord" title="Ouvrir discord.gg/robloxfr">
+          <svg class="ic"><use href="#i-discord" /></svg><span>discord.gg/robloxfr</span>
+        </button>
         <div class="outils">
           <button class="icone" id="btn-son" title="Couper le son (M)"><svg class="ic"><use href="#i-son" /></svg></button>
           <button class="icone" id="btn-panneau" title="Masquer le panneau (P)"><svg class="ic"><use href="#i-panneau" /></svg></button>
@@ -74,7 +81,7 @@
               <input id="champ-titre" maxlength="80" placeholder="Ex. : Qui paie le café ?" autocomplete="off" />
             </label>
 
-            <div class="entete-liste"><span>Choix <b id="nb-choix"></b></span><span>Part</span></div>
+            <div class="entete-liste"><span>Choix <b id="nb-choix"></b></span><span>Chances</span></div>
             <ul class="liste" id="liste"></ul>
 
             <form class="ajout" id="form-ajout">
@@ -82,10 +89,10 @@
               <button class="btn-rond" type="submit" title="Ajouter (Entrée)"><svg class="ic"><use href="#i-plus" /></svg></button>
             </form>
 
-            <div class="total" id="total"></div>
+            <p class="aide-chances">Plus un choix a de chances (+), plus sa part de roue est grande. Le pourcentage se calcule tout seul. À 0, le choix est retiré de la roue sans être supprimé.</p>
 
             <div class="boutons-ligne">
-              <button class="btn" id="btn-egal" title="Donner la même part à chaque choix"><svg class="ic"><use href="#i-egal" /></svg>Parts égales</button>
+              <button class="btn" id="btn-egal" title="Remettre 1 chance à chaque choix"><svg class="ic"><use href="#i-egal" /></svg>Mêmes chances</button>
               <button class="btn" id="btn-melanger" title="Mélanger l'ordre sur la roue"><svg class="ic"><use href="#i-melanger" /></svg>Mélanger</button>
               <button class="btn" id="btn-lot" title="Coller une liste de noms"><svg class="ic"><use href="#i-liste" /></svg>Coller une liste</button>
             </div>
@@ -150,7 +157,7 @@
               <input type="file" id="fichier-import" accept=".json" hidden />
             </section>
 
-            <p class="apropos">La Roue <span id="version"></span> · raccourcis : <kbd>Espace</kbd> lancer, <kbd>M</kbd> son, <kbd>P</kbd> panneau, <kbd>F11</kbd> plein écran</p>
+            <p class="apropos">Roue des sanctions <span id="version"></span> · <a href="https://discord.gg/robloxfr" id="lien-discord">discord.gg/robloxfr</a> · raccourcis : <kbd>Espace</kbd> lancer, <kbd>M</kbd> son, <kbd>P</kbd> panneau, <kbd>F11</kbd> plein écran</p>
           </div>
         </aside>
       </main>
@@ -173,8 +180,8 @@
     <div class="voile" id="modale-lot" hidden>
       <form class="carte" id="form-lot" role="dialog" aria-modal="true" aria-labelledby="titre-lot">
         <h2 id="titre-lot">Coller une liste</h2>
-        <p class="aide">Un choix par ligne. Pour fixer sa part, ajoutez-la à la fin : <code>Pizza ; 30</code></p>
-        <textarea id="champ-lot" rows="9" placeholder="Alice&#10;Bruno&#10;Chloé&#10;David"></textarea>
+        <p class="aide">Un choix par ligne. Pour lui donner plus de chances, ajoutez le nombre à la fin : <code>Mute 1 h ; 3</code></p>
+        <textarea id="champ-lot" rows="9" placeholder="Avertissement ; 4&#10;Mute 10 min ; 3&#10;Mute 1 h ; 2&#10;Kick"></textarea>
         <label class="case"><input type="checkbox" id="lot-remplacer" /> Remplacer les choix actuels</label>
         <div class="boutons">
           <button class="btn" type="button" id="lot-annuler">Annuler</button>

@@ -4,12 +4,12 @@
   // Chaque timbre de claquement = un bruit d'impact très court + quelques résonances amorties.
   const TIMBRES = {
     plastique: {
-      bruit: { amp: 0.9, duree: 0.0009 },
+      bruit: { amp: 0.35, duree: 0.0008 },
       modes: [
-        [2350, 0.0055, 1],
-        [4150, 0.0024, 0.55],
-        [1180, 0.011, 0.5],
-        [330, 0.018, 0.32],
+        [1900, 0.006, 1],
+        [3400, 0.0022, 0.3],
+        [1050, 0.011, 0.55],
+        [300, 0.018, 0.4],
       ],
     },
     bois: {
@@ -22,12 +22,12 @@
       ],
     },
     metal: {
-      bruit: { amp: 0.6, duree: 0.0006 },
+      bruit: { amp: 0.3, duree: 0.0006 },
       modes: [
-        [3180, 0.045, 0.75],
-        [5230, 0.028, 0.45],
-        [7450, 0.016, 0.28],
-        [1590, 0.03, 0.3],
+        [2650, 0.04, 0.75],
+        [4300, 0.022, 0.3],
+        [6100, 0.012, 0.12],
+        [1320, 0.03, 0.4],
       ],
     },
   };
@@ -35,6 +35,7 @@
   let ctx = null;
   let maitre = null;
   let envoiReverb = null;
+  let busClics = null;
   let roulement = null;
   const claquements = {};
   const reglages = { volume: 0.8, actif: true, timbre: "plastique" };
@@ -63,11 +64,22 @@
     retour.gain.value = 0.22;
     envoiReverb = ctx.createGain();
     envoiReverb.connect(reverb).connect(retour).connect(maitre);
+
+    // Les claquements passent par un filtre qui enlève les aigus les plus agressifs.
+    const doux = ctx.createBiquadFilter();
+    doux.type = "lowpass";
+    doux.frequency.value = 4800;
+    doux.Q.value = 0.5;
+    busClics = ctx.createGain();
+    busClics.gain.value = 0.8;
+    busClics.connect(doux);
+    doux.connect(maitre);
+    doux.connect(envoiReverb);
     return ctx;
   }
 
   function gainMaitre() {
-    return reglages.actif ? reglages.volume * reglages.volume : 0;
+    return reglages.actif ? reglages.volume * reglages.volume * 0.85 : 0;
   }
 
   function reponsePiece(duree) {
@@ -140,17 +152,17 @@
     clic(force = 1, delai = 0) {
       if (!reglages.actif) return;
       contexte();
-      const t = Math.max(ctx.currentTime + delai, prochainClic);
-      prochainClic = t + 0.004;
+      // Au plus un claquement toutes les 20 ms : au-delà, on en saute plutôt que de saturer.
+      const t = ctx.currentTime + delai;
+      if (t < prochainClic) return;
+      prochainClic = t + 0.02;
       const liste = variantes(reglages.timbre);
       const source = ctx.createBufferSource();
       source.buffer = liste[Math.floor(Math.random() * liste.length)];
       source.playbackRate.value = 0.94 + Math.random() * 0.12;
       const gain = ctx.createGain();
       gain.gain.value = 0.85 * force;
-      source.connect(gain);
-      gain.connect(maitre);
-      gain.connect(envoiReverb);
+      source.connect(gain).connect(busClics);
       source.start(t);
     },
 
@@ -175,7 +187,7 @@
       if (Math.abs(n - roulement.n) < 0.01) return;
       roulement.n = n;
       const t = ctx.currentTime;
-      roulement.gain.gain.setTargetAtTime(0.22 * n * n, t, 0.06);
+      roulement.gain.gain.setTargetAtTime(0.1 * n * n, t, 0.06);
       roulement.filtre.frequency.setTargetAtTime(160 + 700 * n, t, 0.06);
     },
 
@@ -194,7 +206,7 @@
       filtre.frequency.exponentialRampToValueAtTime(700, t + 0.7);
       const gain = ctx.createGain();
       gain.gain.setValueAtTime(0.0001, t);
-      gain.gain.exponentialRampToValueAtTime(0.5 * force, t + 0.07);
+      gain.gain.exponentialRampToValueAtTime(0.28 * force, t + 0.07);
       gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.75);
       source.connect(filtre).connect(gain).connect(maitre);
       source.start(t);
