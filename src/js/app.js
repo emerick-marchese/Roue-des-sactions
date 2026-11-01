@@ -149,6 +149,7 @@
       return;
     }
     Sons.elan(options.v0 ? Math.min(1, 0.4 + options.v0 / 2000) : 1);
+    Sons.debutRotation();
     verrouiller(true);
     btnLancer.disabled = true;
     btnLancer.querySelector("span").textContent = "Ça tourne…";
@@ -172,6 +173,7 @@
     sauver();
     rendreHistorique();
 
+    Sons.finRotation();
     Sons.victoire();
     if (reglages().confettis) Confettis.lancer(r.segments.map((s) => s.color));
     setTimeout(() => afficherResultat(part), 280);
@@ -683,13 +685,9 @@
 
   // ----- Son personnalisé (fichier audio choisi sur l'ordinateur) -----
 
-  const CLE_SON = "la-roue.son-perso";
-  let sonPerso = null; // { nom, donnees: "data:audio/…;base64,…" }
-  try {
-    sonPerso = JSON.parse(localStorage.getItem(CLE_SON));
-  } catch {
-    sonPerso = null;
-  }
+  const CLE_SON = "la-roue.son-perso"; // ancienne version (1.2.0) : son gardé dans le stockage local
+  const TAILLE_MAX_SON = 25 * 1024 * 1024;
+  let sonPerso = null; // { nom, octets: Uint8Array }
 
   function majSonPerso() {
     const actif = reglages().timbre === "perso";
@@ -697,17 +695,42 @@
     $("#btn-son-perso span").textContent = sonPerso ? `${sonPerso.nom} · changer…` : "Choisir un fichier…";
   }
 
-  async function chargerSonPerso() {
-    if (!sonPerso) return false;
+  async function lireSonEnregistre() {
+    if (window.bureau && window.bureau.sonPerso) {
+      const s = await window.bureau.sonPerso.lire();
+      if (s) return { nom: s.nom, octets: new Uint8Array(s.octets) };
+    }
     try {
-      const brut = atob(sonPerso.donnees.split(",")[1]);
+      const ancien = JSON.parse(localStorage.getItem(CLE_SON));
+      if (!ancien) return null;
+      const brut = atob(ancien.donnees.split(",")[1]);
       const octets = new Uint8Array(brut.length);
       for (let i = 0; i < brut.length; i++) octets[i] = brut.charCodeAt(i);
-      await Sons.chargerSonPerso(octets.buffer);
+      if (window.bureau && window.bureau.sonPerso) {
+        await window.bureau.sonPerso.enregistrer(ancien.nom, octets);
+        localStorage.removeItem(CLE_SON);
+      }
+      return { nom: ancien.nom, octets };
+    } catch {
+      return null;
+    }
+  }
+
+  async function decoderSonPerso(son) {
+    try {
+      await Sons.chargerSonPerso(son.octets.slice().buffer); // copie : le décodage consomme le tampon
       return true;
     } catch {
       return false;
     }
+  }
+
+  function choisirTimbre(valeur) {
+    reglages().timbre = valeur;
+    sauver();
+    document.querySelectorAll("#opt-timbre button").forEach((b) => b.classList.toggle("actif", b.dataset.valeur === valeur));
+    majSonPerso();
+    appliquerReglagesSon();
   }
 
   $("#btn-son-perso").addEventListener("click", () => $("#fichier-son").click());
@@ -715,32 +738,26 @@
     const fichier = e.target.files[0];
     e.target.value = "";
     if (!fichier) return;
-    if (fichier.size > 3 * 1024 * 1024) return notifier("Fichier trop lourd : 3 Mo maximum (un court extrait suffit).");
-    const donnees = await new Promise((ok) => {
-      const lecteur = new FileReader();
-      lecteur.onload = () => ok(lecteur.result);
-      lecteur.readAsDataURL(fichier);
-    });
-    const ancien = sonPerso;
-    sonPerso = { nom: fichier.name, donnees };
-    if (!(await chargerSonPerso())) {
-      sonPerso = ancien;
+    if (fichier.size > TAILLE_MAX_SON) return notifier("Fichier trop lourd : 25 Mo maximum.");
+    const son = { nom: fichier.name, octets: new Uint8Array(await fichier.arrayBuffer()) };
+    if (!(await decoderSonPerso(son))) {
+      if (sonPerso) await decoderSonPerso(sonPerso);
       return notifier("Impossible de lire ce fichier audio (essaie un .mp3 ou un .wav).");
     }
-    try {
-      localStorage.setItem(CLE_SON, JSON.stringify(sonPerso));
-    } catch {
-      notifier("Son utilisé, mais trop lourd pour être retenu au prochain démarrage.");
+    sonPerso = son;
+    if (window.bureau && window.bureau.sonPerso) {
+      try {
+        await window.bureau.sonPerso.enregistrer(son.nom, son.octets);
+      } catch {
+        notifier("Son utilisé, mais il n'a pas pu être enregistré pour le prochain démarrage.");
+      }
     }
-    reglages().timbre = "perso";
-    sauver();
-    document.querySelectorAll("#opt-timbre button").forEach((b) => b.classList.toggle("actif", b.dataset.valeur === "perso"));
-    majSonPerso();
-    appliquerReglagesSon();
+    choisirTimbre("perso");
     essaiSon();
   });
 
   function essaiSon() {
+    if (reglages().timbre === "perso" && sonPerso) return Sons.essaiMusique();
     [0, 0.085, 0.18, 0.29, 0.42, 0.6, 0.86].forEach((d, i) => Sons.clic(0.7 + i * 0.05, d));
   }
 
@@ -886,16 +903,12 @@
   // ----- Démarrage -----
 
   appliquerReglagesSon();
-  if (reglages().timbre === "perso") {
-    chargerSonPerso().then((ok) => {
-      if (ok) return;
-      reglages().timbre = "plastique";
-      sauver();
-      appliquerReglagesSon();
-      document.querySelectorAll("#opt-timbre button").forEach((b) => b.classList.toggle("actif", b.dataset.valeur === "plastique"));
-      majSonPerso();
-    });
-  }
+  lireSonEnregistre().then(async (son) => {
+    const lisible = !!son && (await decoderSonPerso(son));
+    sonPerso = lisible ? son : null;
+    if (reglages().timbre === "perso" && !lisible) choisirTimbre("plastique");
+    else majSonPerso();
+  });
   basculerPanneau(reglages().panneau);
   rendreParts();
   rendreHistorique();

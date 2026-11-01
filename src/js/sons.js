@@ -46,11 +46,13 @@
   let maitre = null;
   let envoiReverb = null;
   let busClics = null;
+  let sonPerso = null; // AudioBuffer du fichier choisi par l'utilisateur
+  const VOLUME_MUSIQUE = 0.9;
   let roulement = null;
   const claquements = {};
   const reglages = { volume: 0.8, actif: true, timbre: "plastique" };
   let prochainClic = 0;
-  const DUREE_PERSO = 0.4;
+  let musique = null; // son personnel joué en continu pendant la rotation
 
   function contexte() {
     if (ctx) {
@@ -135,7 +137,7 @@
   }
 
   function variantes(nom) {
-    if (nom === "perso") return claquements.perso || variantes("plastique");
+    if (nom === "perso") return variantes("plastique"); // son personnel pas encore chargé
     if (!claquements[nom]) {
       claquements[nom] = Array.from({ length: 5 }, () => fabriquerClaquement(TIMBRES[nom]));
     }
@@ -163,38 +165,71 @@
     // Un claquement de la flèche. `force` 0..1, `delai` en secondes.
     clic(force = 1, delai = 0) {
       if (!reglages.actif) return;
+      // Le son personnel remplace les claquements : il est joué en continu par debutRotation().
+      if (reglages.timbre === "perso" && sonPerso) return;
       contexte();
       // Au plus un claquement toutes les 20 ms : au-delà, on en saute plutôt que de saturer.
       const t = ctx.currentTime + delai;
       if (t < prochainClic) return;
       prochainClic = t + 0.02;
       const liste = variantes(reglages.timbre);
-      const perso = reglages.timbre === "perso" && claquements.perso;
       const source = ctx.createBufferSource();
       source.buffer = liste[Math.floor(Math.random() * liste.length)];
-      source.playbackRate.value = perso ? 1 : 0.94 + Math.random() * 0.12;
+      source.playbackRate.value = 0.94 + Math.random() * 0.12;
       const gain = ctx.createGain();
-      gain.gain.setValueAtTime(0.85 * force, t);
+      gain.gain.value = 0.85 * force;
       source.connect(gain).connect(busClics);
       source.start(t);
-      if (perso) {
-        // Un son importé peut être long : on n'en garde que le début, avec un fondu.
-        gain.gain.setValueAtTime(0.85 * force, t + DUREE_PERSO - 0.04);
-        gain.gain.linearRampToValueAtTime(0, t + DUREE_PERSO);
-        source.stop(t + DUREE_PERSO + 0.01);
-      }
     },
 
     // Son choisi par l'utilisateur (fichier audio), joué à la place du claquement.
     async chargerSonPerso(donnees) {
       contexte();
-      claquements.perso = [await ctx.decodeAudioData(donnees)];
+      sonPerso = await ctx.decodeAudioData(donnees);
+    },
+
+    // Début d'une rotation : avec « Mon son… », le fichier part depuis le début,
+    // en boucle s'il est plus court que la rotation.
+    debutRotation() {
+      arreterMusique(0.05);
+      if (!reglages.actif || reglages.timbre !== "perso" || !sonPerso) return;
+      contexte();
+      const source = ctx.createBufferSource();
+      source.buffer = sonPerso;
+      source.loop = true;
+      const gain = ctx.createGain();
+      gain.gain.value = VOLUME_MUSIQUE;
+      source.connect(gain).connect(maitre);
+      source.start();
+      musique = { source, gain, reference: 0 };
+    },
+
+    // Fin de la rotation : le son personnel s'éteint en douceur.
+    finRotation() {
+      arreterMusique(0.35);
+    },
+
+    // « Écouter » avec un son personnel : 4 secondes, de plus en plus bas.
+    essaiMusique() {
+      this.debutRotation();
+      if (!musique) return;
+      const t = ctx.currentTime;
+      musique.essai = true;
+      musique.gain.gain.setValueAtTime(VOLUME_MUSIQUE, t);
+      musique.gain.gain.linearRampToValueAtTime(0, t + 4);
+      musique.source.stop(t + 4.05);
     },
 
     // Bruit de roulement qui suit la vitesse de la roue (en tours par seconde).
     vitesse(tours) {
       if (!ctx) return; // le contexte audio naît au premier claquement ou au premier lancer
-      const n = reglages.actif ? Math.min(1, tours / 2.6) : 0;
+      if (musique && !musique.essai) {
+        // Volume du son personnel : plein au lancer, il baisse à mesure que la roue ralentit.
+        musique.reference = Math.max(musique.reference, tours);
+        const part = musique.reference > 0 ? tours / musique.reference : 1;
+        musique.gain.gain.setTargetAtTime(VOLUME_MUSIQUE * Math.pow(part, 0.6), ctx.currentTime, 0.05);
+      }
+      const n = reglages.actif && !musique ? Math.min(1, tours / 2.6) : 0;
       if (!roulement) {
         if (n < 0.02) return;
         const source = ctx.createBufferSource();
@@ -268,6 +303,21 @@
       o.stop(t + 0.15);
     },
   };
+
+  function arreterMusique(fondu) {
+    if (!musique) return;
+    const { source, gain } = musique;
+    musique = null;
+    const t = ctx.currentTime;
+    gain.gain.cancelScheduledValues(t);
+    gain.gain.setValueAtTime(gain.gain.value, t);
+    gain.gain.linearRampToValueAtTime(0, t + fondu);
+    try {
+      source.stop(t + fondu + 0.02);
+    } catch {
+      // déjà arrêtée (fin de l'écoute d'essai)
+    }
+  }
 
   function cloche(f, t, amp, duree) {
     [

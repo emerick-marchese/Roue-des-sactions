@@ -95,6 +95,22 @@ function creerFenetre() {
 ipcMain.on("plein-ecran", () => fenetre && fenetre.setFullScreen(!fenetre.isFullScreen()));
 ipcMain.handle("version", () => app.getVersion());
 
+// Son personnel (« Mon son… ») : gardé tel quel dans le dossier de l'application.
+const fichierSon = (ext) => path.join(app.getPath("userData"), "son-perso." + ext);
+ipcMain.handle("son-perso:lire", () => {
+  try {
+    const { nom } = JSON.parse(fs.readFileSync(fichierSon("json"), "utf8"));
+    return { nom, octets: fs.readFileSync(fichierSon("bin")) };
+  } catch {
+    return null;
+  }
+});
+ipcMain.handle("son-perso:enregistrer", (_e, nom, octets) => {
+  fs.writeFileSync(fichierSon("bin"), Buffer.from(octets));
+  fs.writeFileSync(fichierSon("json"), JSON.stringify({ nom: String(nom).slice(0, 200) }));
+  return true;
+});
+
 app.on("second-instance", () => {
   if (!fenetre) return;
   if (fenetre.isMinimized()) fenetre.restore();

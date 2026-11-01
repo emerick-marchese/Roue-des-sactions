@@ -40,7 +40,8 @@ Pour désinstaller : *Paramètres → Applications → Roue des sanctions → D�
 - **Plusieurs roues** : menu en haut à gauche, avec une corbeille pour supprimer une roue ;
   chaque roue garde son propre historique.
 - **Réglages** : volume, bruit de la flèche (plastique, bois, métal, jeu télé, ou « Mon son… » :
-  un fichier audio de ton ordinateur, dont seul le début est joué à chaque picot), durée de rotation,
+  un fichier audio de ton ordinateur, jusqu'à 25 Mo, joué depuis le début et en continu pendant
+  la rotation, de plus en plus bas quand la roue ralentit), durée de rotation,
   confettis, retrait automatique du gagnant (tirage sans remise), export / import d'une roue (.json).
 - Raccourcis : <kbd>Espace</kbd> lancer · <kbd>M</kbd> son · <kbd>P</kbd> panneau · <kbd>F11</kbd> plein écran.
 
