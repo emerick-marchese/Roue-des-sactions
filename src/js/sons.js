@@ -21,6 +21,16 @@
         [190, 0.028, 0.45],
       ],
     },
+    // Grosse roue de plateau télé : clac grave et sec, avec un peu de résonance du bois.
+    plateau: {
+      bruit: { amp: 0.5, duree: 0.0012 },
+      modes: [
+        [640, 0.018, 1],
+        [1480, 0.008, 0.6],
+        [2850, 0.0035, 0.25],
+        [150, 0.045, 0.7],
+      ],
+    },
     metal: {
       bruit: { amp: 0.3, duree: 0.0006 },
       modes: [
@@ -40,6 +50,7 @@
   const claquements = {};
   const reglages = { volume: 0.8, actif: true, timbre: "plastique" };
   let prochainClic = 0;
+  const DUREE_PERSO = 0.4;
 
   function contexte() {
     if (ctx) {
@@ -124,6 +135,7 @@
   }
 
   function variantes(nom) {
+    if (nom === "perso") return claquements.perso || variantes("plastique");
     if (!claquements[nom]) {
       claquements[nom] = Array.from({ length: 5 }, () => fabriquerClaquement(TIMBRES[nom]));
     }
@@ -157,13 +169,26 @@
       if (t < prochainClic) return;
       prochainClic = t + 0.02;
       const liste = variantes(reglages.timbre);
+      const perso = reglages.timbre === "perso" && claquements.perso;
       const source = ctx.createBufferSource();
       source.buffer = liste[Math.floor(Math.random() * liste.length)];
-      source.playbackRate.value = 0.94 + Math.random() * 0.12;
+      source.playbackRate.value = perso ? 1 : 0.94 + Math.random() * 0.12;
       const gain = ctx.createGain();
-      gain.gain.value = 0.85 * force;
+      gain.gain.setValueAtTime(0.85 * force, t);
       source.connect(gain).connect(busClics);
       source.start(t);
+      if (perso) {
+        // Un son importé peut être long : on n'en garde que le début, avec un fondu.
+        gain.gain.setValueAtTime(0.85 * force, t + DUREE_PERSO - 0.04);
+        gain.gain.linearRampToValueAtTime(0, t + DUREE_PERSO);
+        source.stop(t + DUREE_PERSO + 0.01);
+      }
+    },
+
+    // Son choisi par l'utilisateur (fichier audio), joué à la place du claquement.
+    async chargerSonPerso(donnees) {
+      contexte();
+      claquements.perso = [await ctx.decodeAudioData(donnees)];
     },
 
     // Bruit de roulement qui suit la vitesse de la roue (en tours par seconde).

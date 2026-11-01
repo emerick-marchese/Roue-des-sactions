@@ -661,10 +661,17 @@
 
   function segmente(id, cle) {
     const el = $(id);
-    const maj = () => el.querySelectorAll("button").forEach((b) => b.classList.toggle("actif", b.dataset.valeur === reglages()[cle]));
+    const maj = () => {
+      el.querySelectorAll("button").forEach((b) => b.classList.toggle("actif", b.dataset.valeur === reglages()[cle]));
+      if (cle === "timbre") majSonPerso();
+    };
     el.addEventListener("click", (e) => {
       const b = e.target.closest("button");
       if (!b) return;
+      if (b.dataset.valeur === "perso" && !sonPerso) {
+        $("#fichier-son").click();
+        return;
+      }
       reglages()[cle] = b.dataset.valeur;
       sauver();
       maj();
@@ -673,6 +680,65 @@
     });
     maj();
   }
+
+  // ----- Son personnalisé (fichier audio choisi sur l'ordinateur) -----
+
+  const CLE_SON = "la-roue.son-perso";
+  let sonPerso = null; // { nom, donnees: "data:audio/…;base64,…" }
+  try {
+    sonPerso = JSON.parse(localStorage.getItem(CLE_SON));
+  } catch {
+    sonPerso = null;
+  }
+
+  function majSonPerso() {
+    const actif = reglages().timbre === "perso";
+    $("#btn-son-perso").hidden = !actif;
+    $("#btn-son-perso span").textContent = sonPerso ? `${sonPerso.nom} · changer…` : "Choisir un fichier…";
+  }
+
+  async function chargerSonPerso() {
+    if (!sonPerso) return false;
+    try {
+      const brut = atob(sonPerso.donnees.split(",")[1]);
+      const octets = new Uint8Array(brut.length);
+      for (let i = 0; i < brut.length; i++) octets[i] = brut.charCodeAt(i);
+      await Sons.chargerSonPerso(octets.buffer);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  $("#btn-son-perso").addEventListener("click", () => $("#fichier-son").click());
+  $("#fichier-son").addEventListener("change", async (e) => {
+    const fichier = e.target.files[0];
+    e.target.value = "";
+    if (!fichier) return;
+    if (fichier.size > 3 * 1024 * 1024) return notifier("Fichier trop lourd : 3 Mo maximum (un court extrait suffit).");
+    const donnees = await new Promise((ok) => {
+      const lecteur = new FileReader();
+      lecteur.onload = () => ok(lecteur.result);
+      lecteur.readAsDataURL(fichier);
+    });
+    const ancien = sonPerso;
+    sonPerso = { nom: fichier.name, donnees };
+    if (!(await chargerSonPerso())) {
+      sonPerso = ancien;
+      return notifier("Impossible de lire ce fichier audio (essaie un .mp3 ou un .wav).");
+    }
+    try {
+      localStorage.setItem(CLE_SON, JSON.stringify(sonPerso));
+    } catch {
+      notifier("Son utilisé, mais trop lourd pour être retenu au prochain démarrage.");
+    }
+    reglages().timbre = "perso";
+    sauver();
+    document.querySelectorAll("#opt-timbre button").forEach((b) => b.classList.toggle("actif", b.dataset.valeur === "perso"));
+    majSonPerso();
+    appliquerReglagesSon();
+    essaiSon();
+  });
 
   function essaiSon() {
     [0, 0.085, 0.18, 0.29, 0.42, 0.6, 0.86].forEach((d, i) => Sons.clic(0.7 + i * 0.05, d));
@@ -820,6 +886,16 @@
   // ----- Démarrage -----
 
   appliquerReglagesSon();
+  if (reglages().timbre === "perso") {
+    chargerSonPerso().then((ok) => {
+      if (ok) return;
+      reglages().timbre = "plastique";
+      sauver();
+      appliquerReglagesSon();
+      document.querySelectorAll("#opt-timbre button").forEach((b) => b.classList.toggle("actif", b.dataset.valeur === "plastique"));
+      majSonPerso();
+    });
+  }
   basculerPanneau(reglages().panneau);
   rendreParts();
   rendreHistorique();

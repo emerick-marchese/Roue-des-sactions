@@ -121,8 +121,14 @@
                   <button data-valeur="plastique">Plastique</button>
                   <button data-valeur="bois">Bois</button>
                   <button data-valeur="metal">Métal</button>
+                  <button data-valeur="plateau">Jeu télé</button>
+                  <button data-valeur="perso" title="Utiliser un fichier audio de ton ordinateur">Mon son…</button>
                 </div>
-                <button class="btn discret" id="btn-tester-son"><svg class="ic"><use href="#i-lecture" /></svg>Écouter</button>
+                <div class="boutons-son">
+                  <button class="btn discret" id="btn-tester-son"><svg class="ic"><use href="#i-lecture" /></svg>Écouter</button>
+                  <button class="btn discret" id="btn-son-perso" hidden><svg class="ic"><use href="#i-import" /></svg><span>Choisir un fichier…</span></button>
+                </div>
+                <input type="file" id="fichier-son" accept="audio/*,.mp3,.wav,.ogg,.m4a" hidden />
               </div>
             </section>
 

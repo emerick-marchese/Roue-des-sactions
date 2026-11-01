@@ -39,7 +39,8 @@ Pour désinstaller : *Paramètres → Applications → Roue des sanctions → D�
 - **Mêmes chances**, **Mélanger**, **Coller une liste** (un choix par ligne, `Mute 1 h ; 3` pour lui donner 3 chances).
 - **Plusieurs roues** : menu en haut à gauche, avec une corbeille pour supprimer une roue ;
   chaque roue garde son propre historique.
-- **Réglages** : volume, bruit de la flèche (plastique, bois, métal), durée de rotation,
+- **Réglages** : volume, bruit de la flèche (plastique, bois, métal, jeu télé, ou « Mon son… » :
+  un fichier audio de ton ordinateur, dont seul le début est joué à chaque picot), durée de rotation,
   confettis, retrait automatique du gagnant (tirage sans remise), export / import d'une roue (.json).
 - Raccourcis : <kbd>Espace</kbd> lancer · <kbd>M</kbd> son · <kbd>P</kbd> panneau · <kbd>F11</kbd> plein écran.
 
